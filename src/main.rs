@@ -1,8 +1,9 @@
 use yew::prelude::*;
+use yew::ShouldRender;
 use ethers::prelude::*;
 use ethers::abi::Abi;
  use ethers::contract::Contract;
- 
+
 const CONTRACT_ADDRESS: &str = "0x6b201D66eed55697f87F0dbD86C120497401f5e6";
 const CONTRACT_ABI: Abi = serde_json::from_str(r#"
 [
@@ -42,7 +43,7 @@ impl Component for Model {
 	type Message = Msg;
 	type Properties = ();
 
-	fn create(_: Self::Properties, _: ComponentLink<Self>) -> Self {
+	fn create(_: Self::Properties) -> Self {
 		Model {
 			password: String::new(),
 			encrypted_password: None,
@@ -79,7 +80,7 @@ impl Component for Model {
 		html! {
 			<>
 			<div>
-				<input type="password",
+				<input type="password";
 				    value=&self.password,
 				    oninput=|e| Msg::UpdatePassword(e.value),
 				    placeholder="Enter password" />
