@@ -1,8 +1,13 @@
 use yew::prelude::*;
-use yew::ShouldRender;
-use ethers::prelude::*;
-use ethers::abi::Abi;
- use ethers::contract::Contract;
+use ethers_core::{
+	abi::Abi,
+	types::{Address, H256},
+};
+use ethers_contract::Contract;
+use ethers_providers::{Middleware, Provider, Http};
+use ethers_signers::LocalWallet;
+use ethers_middleware::SignerMiddleware;
+use std::convert::TryFrom;
 
 const CONTRACT_ADDRESS: &str = "0x6b201D66eed55697f87F0dbD86C120497401f5e6";
 const CONTRACT_ABI: Abi = serde_json::from_str(r#"
@@ -43,28 +48,25 @@ impl Component for Model {
 	type Message = Msg;
 	type Properties = ();
 
-	fn create(_: Self::Properties) -> Self {
+	fn create(ctx: &Context<Self>) -> Self {
 		Model {
 			password: String::new(),
 			encrypted_password: None,
 		}
 	}
 
-	fn update(&mut self, msg: Self::Message) -> ShouldRender {
+	fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
 		match msg {
 			Msg::Encrypt => {
-				let provider = Provider::<Http>::try_from("https://goerli.infura.io/v3/16087e2d4b5247d589382c9038b12f12");
-				let signer = LocalSigner::new("ac5bb51f6a3012f69e637f82fd2c24524149231162a31450d18bd375becfc7f8", provider.clone());
-				let contract = Contract::new(provider, CONTRACT_ADDRESS, CONTRACT_ABI);
+				let provider = Provider::<Http>::try_from("https://goerli.infura.io/v3/16087e2d4b5247d589382c9038b12f12")
+					.expect("could not instantiate HTTP Provider");
+				let wallet: LocalWallet = "ac5bb51f6a3012f69e637f82fd2c24524149231162a31450d18bd375becfc7f8".parse()?;
+				let mut client = SignerMiddleware::new(provider, wallet);
 
-				let function = contract.function("encryptPassword".to_owned());
-				let encoded_input = function.encode_input(self.password.clone());
-				let tx = signer.sign(encoded_input);
-				let hash = provider.send_transaction(tx).wait().unwrap();
-				let receipt = provider.get_transaction_receipt(hash).wait().unwrap();
-				let decoded_output = function.decode_output(receipt.output).unwrap();
-				let encrypted_password = decoded_output[0].to_string();
+				let contract = Contract::new(CONTRACT_ADDRESS, CONTRACT_ABI, client);
 
+				let call = contract.method::<_, H256>("encryptPassword".to_owned());
+	
 				self.encrypted_password = Some(encrypted_password);
 				ConsoleService::log(&format!("Encrypted password: {}", encrypted_password));
 			}
@@ -76,15 +78,15 @@ impl Component for Model {
 		true
 	}
 
-	fn view(&self) -> Html {
+	fn view(&self, _ctx: &Context<Self>) -> Html {
 		html! {
 			<>
 			<div>
-				<input type="password";
-				    value=&self.password,
-				    oninput=|e| Msg::UpdatePassword(e.value),
+				<input type="password"
+				    value={&self.password}
+				    oninput=|e| Msg::UpdatePassword(e.value)
 				    placeholder="Enter password" />
-				<button onclick=|_| Msg::Encrypt,>{Encrypt}</button>
+				<button onclick={|_| Msg::Encrypt,>{Encrypt}}</button>
 				<br />
 				<br />
 				<p>{ &self.encrypted_password.clone().unwrap_or("Encrypted password should appear here".to_string()) }</p>
@@ -95,5 +97,5 @@ impl Component for Model {
 }
 
 fn main() {
-	yew::start_app::<Model>();
+	yew::Renderer::<Model>::new().render();
 }
