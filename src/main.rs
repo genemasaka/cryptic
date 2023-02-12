@@ -10,7 +10,7 @@ use ethers_middleware::SignerMiddleware;
 use std::convert::TryFrom;
 
 const CONTRACT_ADDRESS: &str = "0x6b201D66eed55697f87F0dbD86C120497401f5e6";
-const CONTRACT_ABI: Abi = serde_json::from_str(r#"
+const CONTRACT_ABI: &str = r#"
 [
 	{
 		"inputs": [
@@ -32,7 +32,7 @@ const CONTRACT_ABI: Abi = serde_json::from_str(r#"
 		"type": "function"
 	}
 ]
-"#);
+"#;
 
 struct Model {
 	password: String,
@@ -67,8 +67,7 @@ impl Component for Model {
 
 				let call = contract.method::<_, H256>("encryptPassword".to_owned());
 	
-				self.encrypted_password = Some(encrypted_password);
-				ConsoleService::log(&format!("Encrypted password: {}", encrypted_password));
+				self.encrypted_password = Some(&encrypted_password);
 			}
 			Msg::UpdatePassword(password) => {
 				self.password = password;
@@ -82,10 +81,7 @@ impl Component for Model {
 		html! {
 			<>
 			<div>
-				<input type="password"
-				    value={&self.password}
-				    oninput=|e| Msg::UpdatePassword(e.value)
-				    placeholder="Enter password" />
+				<input type="password" value={&self.password} oninput={|e| Msg::UpdatePassword(e.value)} placeholder="Enter password"/>
 				<button onclick={|_| Msg::Encrypt,>{Encrypt}}</button>
 				<br />
 				<br />
