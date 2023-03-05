@@ -7,7 +7,7 @@ This is a Yew web application that encrypts a user's password using a smart cont
 
 To run the application:
 
-Clone the repository: git clone https://github.com/example/yew-eth-password-encryption.git
+Clone the repository: git clone https://github.com/genemasaka/cryptic.git
 Change into the repository directory: cd yew-eth-password-encryption
 Install the dependencies: cargo install
 Build the application: cargo build
